@@ -10,7 +10,7 @@
 #include <asm/uaccess.h>
 
 #define DEVICE_NAME     "nokia5110fb"
-#define BUFSIZE 4096
+#define BUFSIZE 504
 #define LCDWIDTH 84
 #define LCDHEIGHT 48
 
@@ -34,49 +34,81 @@
 #define PCD8544_SETBIAS 0x10
 #define PCD8544_SETVOP 0x80
 
-int pcd8544_buffer[LCDWIDTH * LCDHEIGHT / 8] = {0,};
+// initial image
+char pcd8544_buffer[] = {
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0xF8 , 0xF8 , 0xFC , 0xAE , 0x0E , 0x0E , 0x06 , 0x0E , 0x06,
+        0xCE , 0x86 , 0x8E , 0x0E , 0x0E , 0x1C , 0xB8 , 0xF0 , 0xF8 , 0x78 , 0x38 , 0x1E , 0x0E , 0x8E , 0x8E , 0xC6,
+        0x0E , 0x06 , 0x0E , 0x06 , 0x0E , 0x9E , 0xFE , 0xFC , 0xF8 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x03 , 0x0F , 0x0F , 0xFE,
+        0xF8 , 0xF0 , 0x60 , 0x60 , 0xE0 , 0xE1 , 0xE3 , 0xF7 , 0x7E , 0x3E , 0x1E , 0x1F , 0x1F , 0x1F , 0x3E , 0x7E,
+        0xFB , 0xF3 , 0xE1 , 0xE0 , 0x60 , 0x70 , 0xF0 , 0xF8 , 0xBE , 0x1F , 0x0F , 0x07 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x80 , 0xC0,
+        0xE0 , 0xFC , 0xFE , 0xFF , 0xF3 , 0x38 , 0x38 , 0x0C , 0x0E , 0x0F , 0x0F , 0x0F , 0x0E , 0x3C , 0x38 , 0xF8,
+        0xF8 , 0x38 , 0x3C , 0x0E , 0x0F , 0x0F , 0x0F , 0x0E , 0x0C , 0x38 , 0x38 , 0xF3 , 0xFF , 0xFF , 0xF8 , 0xE0,
+        0x80 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x7F , 0xFF , 0xE7 , 0xC3 , 0xC1 , 0xE0 , 0xFF , 0xFF , 0x78 , 0xE0 , 0xC0 , 0xC0 , 0xC0 , 0xC0 , 0xE0,
+        0x60 , 0x78 , 0x38 , 0x3F , 0x3F , 0x38 , 0x38 , 0x60 , 0x60 , 0xC0 , 0xC0 , 0xC0 , 0xC0 , 0xE0 , 0xF8 , 0x7F,
+        0xFF , 0xE0 , 0xC1 , 0xC3 , 0xE7 , 0x7F , 0x3E , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x03 , 0x0F , 0x7F , 0xFF , 0xF1 , 0xE0 , 0xC0 , 0x80 , 0x01,
+        0x03 , 0x9F , 0xFF , 0xF0 , 0xE0 , 0xE0 , 0xC0 , 0xC0 , 0xC0 , 0xC0 , 0xC0 , 0xE0 , 0xE0 , 0xF0 , 0xFF , 0x9F,
+        0x03 , 0x01 , 0x80 , 0xC0 , 0xE0 , 0xF1 , 0x7F , 0x1F , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x01,
+        0x03 , 0x03 , 0x07 , 0x07 , 0x0F , 0x1F , 0x1F , 0x3F , 0x3B , 0x71 , 0x60 , 0x60 , 0x60 , 0x60 , 0x60 , 0x71,
+        0x3B , 0x1F , 0x0F , 0x0F , 0x0F , 0x07 , 0x03 , 0x03 , 0x01 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00,
+        0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00
+};
+
+int buf_counter = 0;
+
 
 const int RST = 25;
 const int CE = 8;
 const int DC = 23;
 const int DIN = 10;
 const int CLK = 11;
-//const int VCC = ;
 const int BL = 24;
-//const int GND = ;
 
+static int nokia5110fb_init(void);
+static void nokia5110fb_exit(void);
 
 static struct fb_info nokia5110fb_info;
 
-static const struct fb_var_screeninfo nokia5110fb_defined = {
+static struct fb_var_screeninfo nokia5110fb_var = {
         .xres =		84,
         .yres =		48,
         .xres_virtual =	84,
         .yres_virtual =	48,
-        .bits_per_pixel =1,
+        .bits_per_pixel = 1,
         .activate =	FB_ACTIVATE_NOW,
         .height =	-1,
         .width =	-1,
         .vmode =	FB_VMODE_NONINTERLACED,
 };
 
-static struct fb_fix_screeninfo nokia5110fb_fix __initdata = {
+static struct fb_fix_screeninfo nokia5110fb_fix = {
         .id =		"Nokia 5110",
         .smem_len =	(84*6),
         .type =		FB_TYPE_PACKED_PIXELS,
         .visual =	FB_VISUAL_PSEUDOCOLOR,
-        .line_length =	1024,
+        .line_length =	84,
 };
 
-static const struct fb_ops nokia5110fb_ops = {
-        .owner = THIS_MODULE,
-        .read = nokia5110fb_read, // read operation
-        .write = nokia5110fb_write, // write operation
-//        .ioctl = nokia5110fb_ioctl, //control operation
-        .mmap = nokia5110fb_mmap, // mapping operation
-        .open = nokia5110fb_open, // open operation
-        .release = nokia5110fb_release, // close operation
-};
+
+//
+// Display Control Functions Section
+//
 
 void shiftOut(int val)
 {
@@ -86,7 +118,7 @@ void shiftOut(int val)
         gpio_set_value(DIN, !!(val & (1 << (7 - i))));
 
         gpio_set_value(CLK, 1);
-        for (j = 400; j > 0; j--); // clock speed, anyone? (LCD Max CLK input: 4MHz)
+        for (j = 400; j > 0; j--);
         gpio_set_value(CLK, 0);
     }
 }
@@ -127,17 +159,46 @@ void LCDdisplay(void)
             LCDdata(pcd8544_buffer[(LCDWIDTH*p)+col]);
         }
     }
-    LCDcommand(PCD8544_SETYADDR );  // no idea why this is necessary but it is to finish the last byte?
+    LCDcommand(PCD8544_SETYADDR );
 
 }
 
 void LCDshowbuffer(void)
 {
-//    int i;
-//    for (i = 0; i < LCDWIDTH * LCDHEIGHT / 8; i++  )
-//        pcd8544_buffer[i] = pi_logo[i];
     LCDdisplay();
 }
+
+//
+// Class Attributes section
+//
+static ssize_t display_buffer_show(struct class *cls, struct class_attribute *attr, char *buf){
+    return sprintf(buf, "%s\n", pcd8544_buffer+'\0');
+};
+static ssize_t display_buffer_store(struct class *cls, struct class_attribute *attr, const char *buf, size_t count){
+    printk(KERN_INFO "input buf  %s\n", buf);
+    if (count > 1) {
+        pcd8544_buffer[buf_counter] = buf[0];
+        buf_counter += 1;
+    } else {
+        buf_counter = 0;
+    }
+    LCDshowbuffer();
+    return 1;
+};
+static CLASS_ATTR_RW(display_buffer);
+static struct attribute *class_attr_attrs[] = { &class_attr_display_buffer.attr, NULL };
+ATTRIBUTE_GROUPS(class_attr);
+
+static struct class nokia5100_class = {
+        .name = DEVICE_NAME,
+        .owner = THIS_MODULE,
+        .class_groups = class_attr_groups,
+};
+
+
+//
+// Device Functions Section
+//
 
 void nokia5110_setup(void)
 {
@@ -178,54 +239,57 @@ void nokia5110_setup(void)
     LCDshowbuffer();
 }
 
-static int nokia5110fb_read(struct file *file_pointer, char *buf, size_t count, loff_t *f_pos) {
+static int nokia5110fb_read(struct fb_info *nokia5110_fb_info, char *buf, size_t count, loff_t *ppos) {
 
     int retval;
     char byte;
-    struct fb_info *nokia5110fb_info = file_pointer->private_data;
 
-    for (retval = 0; retval < 84*48; ++retval) {
-        *(pcd8544_buffer+BUFSIZE*retval) = nokia5110fb_info->fix->smem_start;
+    for (retval = 0; retval < 84*6; ++retval) {
+        byte = *(pcd8544_buffer+retval);
+        if (put_user(byte, buf + retval))
+            break;
     }
     return retval;
 }
 
-static ssize_t nokia5110fb_write(struct file *file_pointer, const char *buf, size_t count, loff_t *f_pos) {
-    struct fb_info *nokia5110fb_info = file_pointer->private_data;
+static ssize_t nokia5110fb_write(struct fb_info *nokia5110_fb_info, const char *buf, size_t count, loff_t *ppos) {
 
-    memset(pcd8544_buffer, 0, BUF_SIZE);
+    memset(pcd8544_buffer, 0, BUFSIZE);
     if (copy_from_user(pcd8544_buffer, buf, count) != 0)
         return -EFAULT;
     pcd8544_buffer[count] = '\0';
 
     LCDdisplay();
-    f_pos += count;
+    ppos += count;
     return count;
 }
 
-static int nokia5110fb_open(struct inode *inode, struct file *file_pointer) {
-    static struct fb_info nokia5110fb_info;
-    return 0;
-}
 
 
-static int nokia5110fb_release(struct inode *inode, struct file *file_pointer) {
-    nokia5110fb_info = NULL;
-    return 0;
-}
+static const struct fb_ops nokia5110fb_ops = {
+        .owner = THIS_MODULE,
+        .fb_read = nokia5110fb_read, // read operation
+        .fb_write = nokia5110fb_write, // write operation
+};
 
 static int __init nokia5110fb_init(void)
 {
     nokia5110_setup();
 
     nokia5110fb_info.fbops = &nokia5110fb_ops;
-//    nokia5110fb_info.screen_base = (char *)nokia5110fb_fix.smem_start;
-    nokia5110fb_info.var = nokia5110fb_defined;
+    nokia5110fb_info.screen_base = (char *)nokia5110fb_fix.smem_start;
+    nokia5110fb_info.var = nokia5110fb_var;
     nokia5110fb_info.fix = nokia5110fb_fix;
     nokia5110fb_info.flags = FBINFO_DEFAULT;
-    fb_alloc_cmap(&nokia5110fb_info.cmap, 255, 0);
+    fb_alloc_cmap(&nokia5110fb_info.cmap, 504, 0);
     if (register_framebuffer(&nokia5110fb_info) < 0)
         return 1;
+    if (class_register(&nokia5100_class) < 0)
+    {
+        printk(KERN_DEBUG "Cannot create class %s\n", DEVICE_NAME);
+        unregister_framebuffer(&nokia5110fb_info);
+        return -EINVAL;
+    }
     printk(KERN_INFO "[NOKIA5110FB] - Nokia 5110 Display Framebuffer Driver initialized\n");
     return 0;
 }
@@ -233,6 +297,7 @@ static int __init nokia5110fb_init(void)
 static void __exit nokia5110fb_exit(void)
 {
     unregister_framebuffer(&nokia5110fb_info);
+    class_destroy(&nokia5100_class);
     printk(KERN_INFO "[NOKIA5110FB] - Nokia 5110 Display Framebuffer Driver removed\n");
 }
 
